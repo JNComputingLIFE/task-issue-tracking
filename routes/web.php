@@ -5,7 +5,7 @@ use App\Http\Controllers\IssueController;
 use App\Http\Controllers\TagController;
 use App\Http\Controllers\CommentController;
 use Illuminate\Support\Facades\Route;
-
+Route::middleware('auth.basic')->group(function () {
 Route::redirect('/', '/projects');
 
 Route::resource('projects', ProjectController::class);
@@ -24,3 +24,4 @@ Route::post('/issues/{issue}/toggle-user', [IssueUserController::class, 'toggle'
 // UserAttachments
 Route::post('/issues/{issue}/users/{user}', [IssueController::class, 'attachUser'])->name('issues.attach-user');
 Route::delete('/issues/{issue}/users/{user}', [IssueController::class, 'detachUser'])->name('issues.detach-user');
+});
