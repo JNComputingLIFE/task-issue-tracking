@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Issue;
 use App\Models\Project;
 use App\Models\Tag;
+use App\Models\User;
 use App\Http\Requests\StoreIssueRequest;
 use Illuminate\Http\Request;
 
@@ -12,7 +13,17 @@ class IssueController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Issue::with(['project', 'tags']);
+        // --- BONUS: Eager loaded 'users' relationship ---
+        $query = Issue::with(['project', 'tags', 'users']);
+
+        // --- BONUS: Debounced Text Search Implementation ---
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -29,6 +40,11 @@ class IssueController extends Controller
         $issues = $query->latest()->paginate(10)->withQueryString();
         $tags = Tag::all();
         
+        // --- BONUS: If AJAX search request, return specific list rows directly ---
+        if ($request->ajax()) {
+            return view('issues.partials.list_rows', compact('issues'))->render();
+        }
+
         return view('issues.index', compact('issues', 'tags'));
     }
 
@@ -46,9 +62,14 @@ class IssueController extends Controller
 
     public function show(Issue $issue)
     {
-        $issue->load(['project', 'tags']);
+        // --- BONUS: Eager loaded 'users' relationship ---
+        $issue->load(['project', 'tags', 'users']);
         $allTags = Tag::all();
-        return view('issues.show', compact('issue', 'allTags'));
+        
+        // --- BONUS: Load user directory to fill selection views ---
+        $allUsers = User::all();
+
+        return view('issues.show', compact('issue', 'allTags', 'allUsers'));
     }
 
     public function edit(Issue $issue)
@@ -78,6 +99,19 @@ class IssueController extends Controller
     public function detachTag(Issue $issue, Tag $tag)
     {
         $issue->tags()->detach($tag->id);
+        return response()->json(['success' => true]);
+    }
+
+    // --- BONUS: Handle AJAX user attachments and detachments ---
+    public function attachUser(Issue $issue, User $user)
+    {
+        $issue->users()->syncWithoutDetaching([$user->id]);
+        return response()->json(['success' => true, 'user' => $user]);
+    }
+
+    public function detachUser(Issue $issue, User $user)
+    {
+        $issue->users()->detach($user->id);
         return response()->json(['success' => true]);
     }
 }

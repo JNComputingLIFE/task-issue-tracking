@@ -1,7 +1,5 @@
 @extends('layouts.app')
 
-
-
 @section('content')
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8" id="issue-container" data-issue-id="{{ $issue->id }}">
     
@@ -57,6 +55,20 @@
                 @endforeach
             </div>
         </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-gray-700">Assignees</h3>
+                <button onclick="toggleUserModal(true)" class="text-xs font-semibold text-indigo-600 hover:underline">Assign</button>
+            </div>
+            <div id="active-users" class="flex flex-wrap gap-1.5">
+                @foreach($issue->users as $user)
+                    <span data-user-id="{{ $user->id }}" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200 shadow-sm">
+                        {{ $user->name }}
+                    </span>
+                @endforeach
+            </div>
+        </div>
     </div>
 </div>
 
@@ -78,6 +90,29 @@
             @endforeach
         </div>
         <button onclick="toggleTagModal(false)" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 py-2.5 rounded-lg font-semibold text-sm transition">Close Panel</button>
+    </div>
+</div>
+
+<div id="user-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 z-50 animate-fade-in">
+    <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6 relative">
+        <h3 class="text-lg font-bold mb-4">Manage Assigned Members</h3>
+        <div class="max-h-64 overflow-y-auto space-y-2 mb-6">
+            @foreach($allUsers as $user)
+                <label class="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg cursor-pointer border border-gray-100">
+                    <span class="text-sm font-medium flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-bold flex items-center justify-center">
+                            {{ strtoupper(substr($user->name, 0, 2)) }}
+                        </span>
+                        {{ $user->name }}
+                    </span>
+                    <input type="checkbox" 
+                           class="user-checkbox h-4 w-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500" 
+                           data-user-id="{{ $user->id }}"
+                           {{ $issue->users->contains($user->id) ? 'checked' : '' }}>
+                </label>
+            @endforeach
+        </div>
+        <button onclick="toggleUserModal(false)" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 py-2.5 rounded-lg font-semibold text-sm transition">Close Panel</button>
     </div>
 </div>
 
@@ -186,6 +221,33 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    // --- BONUS: INTERACTIVE MEMBER ASSIGNMENT OPERATIONS ---
+    document.querySelectorAll('.user-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', async function() {
+            const userId = this.dataset.userId;
+            const activeUsersContainer = document.getElementById('active-users');
+
+            if (this.checked) {
+                const res = await fetch(`/issues/${issueId}/users/${userId}`, { method: 'POST', headers: secureHeaders() });
+                const data = await res.json();
+                if(data.success) {
+                    const span = document.createElement('span');
+                    span.dataset.userId = data.user.id;
+                    span.className = 'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200 shadow-sm';
+                    span.innerText = data.user.name;
+                    activeUsersContainer.appendChild(span);
+                }
+            } else {
+                const res = await fetch(`/issues/${issueId}/users/${userId}`, { method: 'DELETE', headers: secureHeaders() });
+                const data = await res.json();
+                if(data.success) {
+                    const targetSpan = activeUsersContainer.querySelector(`[data-user-id="${userId}"]`);
+                    if(targetSpan) targetSpan.remove();
+                }
+            }
+        });
+    });
+
     document.getElementById('load-more-comments').addEventListener('click', () => fetchComments(true));
     function escapeHtml(str) { return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
     
@@ -194,6 +256,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
 function toggleTagModal(show) {
     document.getElementById('tag-modal').classList.toggle('hidden', !show);
+}
+
+// --- BONUS: Toggle User Window control helper ---
+function toggleUserModal(show) {
+    document.getElementById('user-modal').classList.toggle('hidden', !show);
 }
 </script>
 @endsection

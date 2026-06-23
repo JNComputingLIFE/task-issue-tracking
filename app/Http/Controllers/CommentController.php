@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Issue;
 use App\Models\Comment;
 use Illuminate\Http\Request;
-
+use App\Models\User;
 class CommentController extends Controller
 {
     public function index(Issue $issue)

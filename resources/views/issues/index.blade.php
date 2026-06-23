@@ -12,7 +12,12 @@
 </div>
 
 <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6">
-    <form action="{{ route('issues.index') }}" method="GET" class="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
+    <form id="filter-form" action="{{ route('issues.index') }}" method="GET" class="grid grid-cols-1 sm:grid-cols-5 gap-4 items-end">
+        <div class="sm:col-span-2">
+            <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Search Issues</label>
+            <input type="text" id="search-input" name="search" value="{{ request('search') }}" placeholder="Search title or description..." class="w-full border border-gray-300 rounded-lg p-2 text-sm bg-white focus:outline-none focus:border-indigo-500">
+        </div>
+
         <div>
             <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Status</label>
             <select name="status" class="w-full border border-gray-300 rounded-lg p-2 text-sm bg-white">
@@ -42,11 +47,6 @@
                 @endforeach
             </select>
         </div>
-
-        <div class="flex gap-2">
-            <button type="submit" class="flex-1 bg-gray-800 hover:bg-gray-900 text-white font-semibold text-sm py-2 rounded-lg transition">Filter</button>
-            <a href="{{ route('issues.index') }}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-center font-semibold text-sm py-2 px-3 rounded-lg transition">Reset</a>
-        </div>
     </form>
 </div>
 
@@ -56,55 +56,53 @@
             <tr class="bg-gray-50 border-b border-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                 <th class="p-4">Issue Details</th>
                 <th class="p-4">Project</th>
+                <th class="p-4">Assignees</th>
                 <th class="p-4">Status & Priority</th>
                 <th class="p-4 text-right">Actions</th>
             </tr>
         </thead>
-        <tbody class="divide-y divide-gray-100 text-sm">
-            @forelse($issues as $issue)
-                <tr class="hover:bg-gray-50/70 transition">
-                    <td class="p-4">
-                        <a href="{{ route('issues.show', $issue) }}" class="font-semibold text-gray-900 hover:text-indigo-600 transition block">
-                            {{ $issue->title }}
-                        </a>
-                        <div class="flex flex-wrap gap-1 mt-1">
-                            @foreach($issue->tags as $t)
-                                <span class="px-2 py-0.5 rounded text-[10px] font-medium text-white" style="background-color: {{ $t->color ?? '#6366f1' }}">
-                                    {{ $t->name }}
-                                </span>
-                            @endforeach
-                        </div>
-                    </td>
-                    <td class="p-4 text-gray-500 font-medium">
-                        {{ $issue->project->name }}
-                    </td>
-                    <td class="p-4 space-x-1 whitespace-nowrap">
-                        <span class="px-2 py-0.5 rounded text-xs font-bold uppercase {{ $issue->status === 'closed' ? 'bg-gray-100 text-gray-800' : 'bg-blue-50 text-blue-700' }}">
-                            {{ str_replace('_', ' ', $issue->status) }}
-                        </span>
-                        <span class="px-2 py-0.5 rounded text-xs font-bold uppercase {{ $issue->priority === 'high' ? 'bg-red-50 text-red-700' : 'bg-gray-100 text-gray-600' }}">
-                            {{ $issue->priority }}
-                        </span>
-                    </td>
-                    <td class="p-4 text-right space-x-2 whitespace-nowrap">
-                        <a href="{{ route('issues.edit', $issue) }}" class="text-gray-500 hover:text-indigo-600 font-medium text-xs">Edit</a>
-                        <form action="{{ route('issues.destroy', $issue) }}" method="POST" class="inline-block" onsubmit="return confirm('Delete this issue permanently?');">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="text-red-500 hover:text-red-700 font-medium text-xs">Delete</button>
-                        </form>
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="4" class="p-8 text-center text-gray-400">No matching issues discovered.</td>
-                </tr>
-            @endforelse
+        <tbody id="issues-table-body" class="divide-y divide-gray-100 text-sm">
+            @include('issues.partials.list_rows', ['issues' => $issues])
         </tbody>
     </table>
 </div>
 
-<div class="mt-4">
+<div id="pagination-wrapper" class="mt-4">
     {{ $issues->links() }}
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('search-input');
+    const filterForm = document.getElementById('filter-form');
+    let debounceTimeout = null;
+
+    function triggerSearch() {
+        const formData = new FormData(filterForm);
+        const params = new URLSearchParams(formData).toString();
+
+        fetch(`{{ route('issues.index') }}?${params}`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.text())
+        .then(html => {
+            document.getElementById('issues-table-body').innerHTML = html;
+            // Note: If you want pagination links to update dynamically over AJAX search too,
+            // you can include pagination elements inside the partial view template payload.
+        })
+        .catch(err => console.error('Error fetching search results:', err));
+    }
+
+    // Debounce watcher structure running at 350ms delays
+    searchInput.addEventListener('input', function() {
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(triggerSearch, 350);
+    });
+
+    // Run dynamic structural update when filters shift directly
+    filterForm.querySelectorAll('select').forEach(elem => {
+        elem.addEventListener('change', triggerSearch);
+    });
+});
+</script>
 @endsection

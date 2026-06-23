@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Project;
 use App\Models\Issue;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -20,6 +21,7 @@ class ProjectFactory extends Factory
             'description' => $this->faker->paragraph(),
             'start_date' => $this->faker->date(),
             'deadline' => $this->faker->date(),
+            'user_id' => User::factory(),
         ];
     }
 
