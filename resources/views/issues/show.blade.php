@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
-@define $issue
 
-@content('content')
+
+@section('content')
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8" id="issue-container" data-issue-id="{{ $issue->id }}">
     
     <div class="lg:col-span-2 space-y-6">
@@ -196,4 +196,4 @@ function toggleTagModal(show) {
     document.getElementById('tag-modal').classList.toggle('hidden', !show);
 }
 </script>
-@endcontent
+@endsection
