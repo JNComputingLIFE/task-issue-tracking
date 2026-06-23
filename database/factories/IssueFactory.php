@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Models\Issue;
 use App\Models\Comment;
 use App\Models\Tag;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class IssueFactory extends Factory
@@ -14,7 +15,7 @@ class IssueFactory extends Factory
     public function definition(): array
     {
         return [
-            'project_id' => null, // Overridden by ProjectFactory or Seeder
+            'project_id' => null, 
             'title' => $this->faker->sentence(6),
             'description' => $this->faker->paragraph(),
             'status' => $this->faker->randomElement(['open', 'in_progress', 'closed']),
@@ -31,9 +32,14 @@ class IssueFactory extends Factory
                 ->create(['issue_id' => $issue->id]);
 
             $tags = Tag::inRandomOrder()->take(rand(1, 3))->pluck('id');
-            
             if ($tags->isNotEmpty()) {
                 $issue->tags()->attach($tags);
+            }
+
+            // --- BONUS: Automatically seed system user attachments here ---
+            $users = User::inRandomOrder()->take(rand(1, 2))->pluck('id');
+            if ($users->isNotEmpty()) {
+                $issue->users()->attach($users);
             }
         });
     }

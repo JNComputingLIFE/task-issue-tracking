@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use App\Models\User;
 use App\Models\Issue;
+
 class ProjectController extends Controller
 {
     public function index()
@@ -23,7 +24,13 @@ class ProjectController extends Controller
 
     public function store(StoreProjectRequest $request)
     {
-        Project::create($request->validated());
+        $data = $request->validated();
+        
+        // Capture authenticated ID, fallback to first user for guest/testing states
+        $data['user_id'] = auth()->id() ?? \App\Models\User::first()?->id;
+
+        Project::create($data);
+
         return redirect()->route('projects.index')->with('success', 'Project created successfully.');
     }
 

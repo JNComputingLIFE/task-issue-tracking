@@ -13,6 +13,7 @@ class Project extends Model
         'description',
         'start_date',
         'deadline',
+        'user_id',
     ];
 
     public function issues()
