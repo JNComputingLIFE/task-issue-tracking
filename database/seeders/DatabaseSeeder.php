@@ -6,20 +6,22 @@ use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
+//project needs
+use App\Models\Project;
+use App\Models\Issue;
+use App\Models\Tag;
+use App\Models\Comment;
+
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
+  public function run(): void
+{   //note: make a taglist, then create the tag per type.. 
+    $tags = collect(['Bug', 'Feature', 'Refactor', 'Documentation', 'Security'])
+        ->map(fn ($name) => Tag::firstOrCreate([
+            'name' => $name,
+            'color' => '#' . str_pad(dechex(mt_rand(0x000000, 0xFFFFFF)), 6, '0', STR_PAD_LEFT)
+        ]));
 
-    /**
-     * Seed the application's database.
-     */
-    public function run(): void
-    {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
-    }
+    Project::factory()->count(3)->create();
+}
 }

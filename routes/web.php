@@ -10,7 +10,7 @@ Route::redirect('/', '/projects');
 
 Route::resource('projects', ProjectController::class);
 Route::resource('issues', IssueController::class);
-Route::resource('tags', TagController::only(['index', 'store']));
+Route::resource('tags', TagController::class)->only(['index', 'store']);
 
 // Additional Routes (so no reloading, ajax)
 Route::get('/issues/{issue}/comments', [CommentController::class, 'index']);
