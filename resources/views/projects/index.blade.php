@@ -18,44 +18,51 @@
                 <th class="p-4 text-right">Actions</th>
             </tr>
         </thead>
-        <tbody class="divide-y divide-gray-100 text-sm">
-            @forelse($projects as $project)
-                <tr class="hover:bg-gray-50/70 transition">
-                    <td class="p-4">
-                        <a href="{{ route('projects.show', $project) }}" class="font-semibold text-indigo-600 hover:underline block">
-                            {{ $project->name }}
-                        </a>
-                        <span class="text-xs text-gray-400 line-clamp-1">{{ $project->description }}</span>
-                    </td>
-                    <td class="p-4 text-gray-500 text-xs whitespace-nowrap">
-                        @if($project->start_date || $project->deadline)
-                            📅 {{ $project->start_date ? \Carbon\Carbon::parse($project->start_date)->format('M d, Y') : 'Start...' }} 
-                            to 
-                            {{ $project->deadline ? \Carbon\Carbon::parse($project->deadline)->format('M d, Y') : 'End...' }}
-                        @else
-                            <span class="text-gray-300">No dates set</span>
-                        @endif
-                    </td>
-                    <td class="p-4">
-                        <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100">
-                            {{ $project->issues_count }}
-                        </span>
-                    </td>
-                    <td class="p-4 text-right space-x-2 whitespace-nowrap">
-                        <a href="{{ route('projects.edit', $project) }}" class="text-gray-500 hover:text-indigo-600 font-medium text-xs">Edit</a>
-                        <form action="{{ route('projects.destroy', $project) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure you want to delete this project?');">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="text-red-500 hover:text-red-700 font-medium text-xs">Delete</button>
-                        </form>
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="4" class="p-8 text-center text-gray-400">No projects built yet.</td>
-                </tr>
-            @endforelse
-        </tbody>
+     <tbody class="divide-y divide-gray-100 text-sm">
+    @forelse($projects as $project)
+        <tr class="hover:bg-gray-50/70 transition">
+            <td class="p-4">
+                <a href="{{ route('projects.show', $project) }}" class="font-semibold text-indigo-600 hover:underline block">
+                    {{ $project->name }}
+                </a>
+                <span class="text-xs text-gray-400 line-clamp-1 mb-1">{{ $project->description }}</span>
+                
+                <div class="flex items-center gap-1 mt-0.5">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Owner:</span>
+                    <span class="text-xs font-medium text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded">
+                        {{ $project->owner->name ?? 'Unassigned' }}
+                    </span>
+                </div>
+            </td>
+            <td class="p-4 text-gray-500 text-xs whitespace-nowrap">
+                @if($project->start_date || $project->deadline)
+                    📅 {{ $project->start_date ? \Carbon\Carbon::parse($project->start_date)->format('M d, Y') : 'Start...' }} 
+                    to 
+                    {{ $project->deadline ? \Carbon\Carbon::parse($project->deadline)->format('M d, Y') : 'End...' }}
+                @else
+                    <span class="text-gray-300">No dates set</span>
+                @endif
+            </td>
+            <td class="p-4">
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100">
+                    {{ $project->issues_count }}
+                </span>
+            </td>
+            <td class="p-4 text-right space-x-2 whitespace-nowrap">
+                <a href="{{ route('projects.edit', $project) }}" class="text-gray-500 hover:text-indigo-600 font-medium text-xs">Edit</a>
+                <form action="{{ route('projects.destroy', $project) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure you want to delete this project?');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="text-red-500 hover:text-red-700 font-medium text-xs">Delete</button>
+                </form>
+            </td>
+        </tr>
+    @empty
+        <tr>
+            <td colspan="4" class="p-8 text-center text-gray-400">No projects built yet.</td>
+        </tr>
+    @endforelse
+</tbody>
     </table>
 </div>
 @endsection

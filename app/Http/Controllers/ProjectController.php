@@ -11,11 +11,13 @@ use App\Models\Issue;
 
 class ProjectController extends Controller
 {
-    public function index()
-    {
-        $projects = Project::withCount('issues')->latest()->get();
-        return view('projects.index', compact('projects'));
-    }
+ public function index()
+{
+    // Eager load the 'owner' relationship along with the issues count
+    $projects = Project::with(['owner'])->withCount('issues')->latest()->get();
+    
+    return view('projects.index', compact('projects'));
+}
 
     public function create()
     {
